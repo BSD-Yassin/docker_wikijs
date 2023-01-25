@@ -1,0 +1,38 @@
+version: "3"
+services:
+
+  db:
+    image: postgres:11-alpine
+    environment:
+      POSTGRES_DB: ##user 
+      POSTGRES_PASSWORD: ##dbpassword
+      POSTGRES_USER: ##user 
+    logging:
+      driver: "none"
+    restart: unless-stopped
+    volumes:
+      - db-data:/var/lib/postgresql/data
+
+  wiki:
+    image: ghcr.io/requarks/wiki:2
+    depends_on:
+      - db
+    environment:
+      LETSENCRYPT_DOMAIN: #mydomain 
+      SSL_ACTIVE: 1
+      DB_TYPE: postgres
+      DB_HOST: db
+      DB_PORT: #PORT
+      DB_USER: # dbuser 
+      DB_PASS: # dbpassw
+      DB_NAME: wiki
+    restart: unless-stopped
+    ports:
+      - "80:3000"
+  letsencrypt:
+    image:
+    depends_on:
+      - wikijs
+    
+volumes:
+  db-data::q

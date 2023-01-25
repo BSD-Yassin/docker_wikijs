@@ -1,0 +1,61 @@
+---
+name: WikiJS Ansible playbook
+hosts: nanode 
+gather_facts: yes
+
+vars:
+  container_count: 1
+
+tasks:
+  - name: Creates the network prior to the containers 
+    docker_networks:
+      name: WikiJS
+      state: present
+  - name: Creates the container
+    docker_container:
+      name: postgres:11-alpine
+      env:
+        POSTGRES_DB: 
+        POSTGRES_PASSWORD:
+        POSTGRES_USER:
+      network_mode: bridge
+      networks: WikiJS 
+      image: postgres:11-alpine
+      hostname: db 
+      restart_policy: unless-stopeed
+      state: present
+      volumes:
+        - db-data:/var/lib/postgresql/data
+    - name: Creates the wiki container
+    docker_container:
+      name: ghcr.io/requarks/wiki:2
+      env:
+        LETSENCRYPT_DOMAIN: wikijs.sintunnel.xyz
+        SSL_ACTIVE: 1
+        DB_TYPE: postgres
+        DB_HOST: db
+        DB_PORT: 5432
+        DB_USER: sindebian
+        DB_PASS: DmXkwG7yqNE43P
+        DB_NAME: wiki
+      ports: 
+          - "80:3000" 
+      networks: WikiJS
+      image: postgres:11-alpine
+      hostname: wiki
+      restart_policy: unless-stopeed
+      state: present
+      volumes:
+        - db-data:/var/lib/postgresql/data
+    - name: Encrypts the connection for HTTPS
+    docker_container:
+      name: letsencrypt
+      network_mode:
+      networks: WikiJS
+      image: postgres:11-alpine
+      hostname: db 
+      restart_policy: unless-stopeed
+      state: present
+      volumes:
+        - db-data:/var/lib/postgresql/data
+
